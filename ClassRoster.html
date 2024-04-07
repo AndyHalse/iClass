@@ -1,0 +1,195 @@
+    <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Class Roster - Health Club App</title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css">
+        <style>
+            /* Similar styles as in Index.html */
+            :root {
+                --primary-bg-color: #18332E;
+                --primary-txt-color: #18332E;
+                --button-bg-color: #ffffff;
+                --button-txt-color: #18332E;
+            }
+            body {
+                background-color: var(--primary-bg-color);
+                color: white;
+            }
+            header, footer {
+                background-color: var(--primary-bg-color);
+                color: white;
+            }
+            .roster-container {
+                display: flex;
+                flex-direction: column;
+                margin-top: 20px;
+            }
+            .member-entry {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px;
+                background: var(--button-bg-color);
+                color: var(--primary-txt-color);
+                margin-bottom: 10px;
+                border-radius: 5px;
+            }
+            .member-name {
+                flex-grow: 1;
+            }
+            .member-status-dropdown {
+                flex-basis: 150px; /* Adjust width as needed */
+            }
+            /* Additional styles as needed */
+        </style>
+    </head>
+    
+<body>
+
+    <!-- Header -->
+    <header class="d-flex justify-content-between align-items-center p-3">
+        <img src="images/TLC Logo.png" alt="Health Club Logo" height="60">
+        <!-- Live Date/Time Display -->
+        <div id="liveDateTime" class="text-white"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container text-center">
+            <h1 class="mt-5" id="classRosterHeading">Class Roster</h1>
+            <button class="btn-modern class-button" onclick="window.location.href='Index.html'">Home</button>
+            <button class="btn-modern class-button" id="selectAll">Select All as Arrived</button>
+            <button class="btn-modern class-button" id="saveAttendance">Save Attendance</button>
+            <div id="classRosterContent"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-3">
+        <p>&copy; 2024 Health Club App</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const className = params.get('class');
+            const classRosterHeading = document.getElementById('classRosterHeading');
+            
+            if (!className) {
+                document.getElementById('classRosterContent').innerText = 'No class selected.';
+                return;
+            }
+        // Update the class roster heading with the selected class name
+        document.getElementById('classRosterHeading').textContent = `Class Roster for ${className}`;
+
+        // Check if the classRosterHeading element exists
+            if (classRosterHeading) {
+                classRosterHeading.textContent = `Class Roster for ${className}`;
+            }
+
+            loadClassRoster(className);
+        });
+
+        function loadClassRoster(className) {
+        const rosterElement = document.getElementById('classRosterContent');
+        rosterElement.innerHTML = `Loading roster for ${className}...`;
+
+        fetch('db/class_rosters.json')
+            .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    const roster = data[className];
+                    if (!roster) {
+                        throw new Error(`Class '${className}' not found in the roster data.`);
+                    }
+                    if (roster.length === 0) {
+                        throw new Error(`No members found for class '${className}'.`);
+                    }
+
+                    const rosterList = document.createElement('ul');
+                    roster.forEach(member => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = member + ' ';
+                        const dropdown = createAttendanceDropdown(member);
+                        dropdown.setAttribute('data-member', member); // To identify the member in the select callback
+                        listItem.appendChild(dropdown);
+                        rosterList.appendChild(listItem);
+                    });
+                    rosterElement.innerHTML = '';
+                    rosterElement.appendChild(rosterList);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    rosterElement.innerHTML = `<strong>Error loading roster for ${className}</strong>: ${error.message}`;
+                });
+        }
+
+        function createAttendanceDropdown(memberName) {
+            const select = document.createElement('select');
+            select.onchange = function() { updateMemberStatus(memberName, this.value); };
+            const options = ['Arrived', 'Not Arrived', 'Late to Class', 'Other'];
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.text = opt;
+                select.appendChild(option);
+            });
+            return select;
+        }
+
+        function updateMemberStatus(memberName, status) {
+            console.log(memberName + ' is marked as ' + status);
+            // Add logic to update the status in the database or any other actions
+        }
+                // Function to format date/time string
+                function formatDateTime(date) {
+            return date.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+        // Updated saveAttendance function
+        function saveAttendance() {
+            // Your logic to process and save attendance data
+
+            // Show a pop-up message
+            alert('Saved');
+
+            // Redirect to index.html
+            window.location.href = 'index.html';
+        }
+            // Add the event listener to the "Save Attendance" button
+            document.getElementById('saveAttendance').addEventListener('click', saveAttendance);
+
+
+        // Function to update date/time display
+        function updateDateTime() {
+            document.getElementById('liveDateTime').textContent = formatDateTime(new Date());
+        }
+                // Update the date/time display immediately and set it to update every second
+                updateDateTime();
+        setInterval(updateDateTime, 1000);
+        document.getElementById('selectAll').addEventListener('click', function() {
+            const selects = document.querySelectorAll('#classRosterContent select');
+            selects.forEach(select => {
+                select.value = 'Arrived';
+                const memberName = select.getAttribute('data-member');
+                updateMemberStatus(memberName, 'Arrived');
+            });
+        });
+    </script>
+ 
+</body>
+</html>

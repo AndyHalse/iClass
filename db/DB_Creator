@@ -1,0 +1,43 @@
+-- database: /Users/andyhalse/Library/Mobile Documents/com~apple~CloudDocs/ACS Development/iClass/health-club-app/db/iClass.db
+
+-- Use the ▷ button in the top right corner to run the entire file.
+
+CREATE TABLE
+    Members (
+        MemberID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Name VARCHAR(255) NOT NULL,
+        Email VARCHAR(255) NOT NULL UNIQUE,
+        Phone VARCHAR(50)
+    );
+
+
+CREATE TABLE
+    Classes (
+        ClassID INTEGER PRIMARY KEY AUTOINCREMENT,
+        ClassName VARCHAR(255) NOT NULL,
+        Schedule DATETIME NOT NULL,
+        TeacherID INT,
+        MaxCapacity INT,
+        FOREIGN KEY (TeacherID) REFERENCES Members (MemberID)
+    );
+
+
+CREATE TABLE
+    Bookings (
+        BookingID INTEGER PRIMARY KEY AUTOINCREMENT,
+        MemberID INT,
+        ClassID INT,
+        BookingTime DATETIME NOT NULL,
+        FOREIGN KEY (MemberID) REFERENCES Members (MemberID),
+        FOREIGN KEY (ClassID) REFERENCES Classes (ClassID)
+    );
+
+CREATE TABLE
+    Attendance (
+        AttendanceID INTEGER PRIMARY KEY AUTOINCREMENT,
+        BookingID INT,
+        ArrivalTime DATETIME,
+        FOREIGN KEY (BookingID) REFERENCES Bookings (BookingID)
+    );
+
+
